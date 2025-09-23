@@ -8,6 +8,8 @@ doctrine:
 
         profiling_collect_backtrace: '%kernel.debug%'
         use_savepoints: true
+        mapping_types:
+            enum: string
     orm:
         auto_generate_proxy_classes: true
         enable_lazy_ghost_objects: true
@@ -52,3 +54,4 @@ when@prod:
                     adapter: cache.app
                 doctrine.system_cache_pool:
                     adapter: cache.system
+

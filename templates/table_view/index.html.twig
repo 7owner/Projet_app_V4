@@ -1,0 +1,123 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tableau - {{ tableName }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+<div class="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-purple-600 text-gray-800">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <h1 class="text-3xl md:text-4xl font-bold text-white mb-8">{{ tableName }} Data</h1>
+
+        <!-- Contrôles de recherche -->
+        <div class="mb-8">
+            <form method="get" action="{{ path('app_table_view', {'tableName': tableName}) }}" class="flex flex-col sm:flex-row gap-4">
+                <input type="text" name="search" placeholder="Rechercher..." value="{{ searchQuery }}" class="flex-grow px-4 py-2 border-2 border-gray-200 rounded-lg bg-white focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 focus:ring-opacity-50 transition-all duration-200 placeholder-gray-400">
+                <button type="submit" class="bg-indigo-500 text-white font-semibold py-2 px-6 rounded-lg hover:bg-indigo-600 hover:shadow-lg transition-all duration-200">
+                    Rechercher
+                </button>
+            </form>
+        </div>
+
+        <!-- Grille des cartes -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {% for item in data %}
+                {% if tableName == 'Maintenance' %}
+                    <a href="{{ path('app_table_view_detail', {'tableName': 'Doe', 'id': item.doe.id}) }}" class="relative bg-white bg-opacity-90 backdrop-blur-lg p-6 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100">
+                        <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-t-xl"></div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-3">DOE: {{ item.doe.titre }} (Maintenance #{{ item.id }})</h3>
+                        <ul class="space-y-2 text-sm text-gray-600">
+                            <li><strong>Titre maintenance:</strong> {{ item.titre }}</li>
+                            <li><strong>Description:</strong> {{ item.description }}</li>
+                            <li><strong>État:</strong> {{ item.etat }}</li>
+                            <li><strong>Responsable:</strong> {{ item.responsable.nom }}</li>
+                            <li><strong>Affaire:</strong> {{ item.affaire.nomAffaire }}</li>
+                        </ul>
+                        <span class="text-indigo-500 font-semibold text-sm mt-4 block text-right">Voir les détails du DOE →</span>
+                    </a>
+                {% elseif tableName == 'Agent' %}
+                    <a href="{{ path('app_agent_show_passeports', {'matricule': item.matricule}) }}" class="relative bg-white bg-opacity-90 backdrop-blur-lg p-6 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100">
+                        <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-t-xl"></div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-3">{{ tableName }} #{{ item.matricule }}</h3>
+                        <ul class="space-y-2 text-sm text-gray-600">
+                            {% for key, label in columns %}
+                                <li><strong>{{ label }}:</strong> 
+                                    {% set value = item %}
+                                    {% for part in key|split('.') %}
+                                        {% if value is iterable and value[part] is defined %}
+                                            {% set value = value[part] %}
+                                        {% elseif value is not null and attribute(value, part) is defined %}
+                                            {% set value = attribute(value, part) %}
+                                        {% else %}
+                                            {% set value = null %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    {% if value is not null and value.format is defined %}
+                                        {{ value|date('Y-m-d H:i:s') }}
+                                    {% elseif value is same as(true) %}
+                                        Oui
+                                    {% elseif value is same as(false) %}
+                                        Non
+                                    {% else %}
+                                        {{ value }}
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                        <span class="text-indigo-500 font-semibold text-sm mt-4 block text-right">Voir les passeports →</span>
+                    </a>
+                {% else %}
+                    <a href="{{ path('app_table_view_detail', {'tableName': tableName, 'id': item.id}) }}" class="relative bg-white bg-opacity-90 backdrop-blur-lg p-6 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100">
+                        <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-t-xl"></div>
+                        <h3 class="text-lg font-semibold text-gray-800 mb-3">{{ tableName }} #{{ item.id }}</h3>
+                        <ul class="space-y-2 text-sm text-gray-600">
+                            {% for key, label in columns %}
+                                <li><strong>{{ label }}:</strong> 
+                                    {% set value = item %}
+                                    {% for part in key|split('.') %}
+                                        {% if value is iterable and value[part] is defined %}
+                                            {% set value = value[part] %}
+                                        {% elseif value is not null and attribute(value, part) is defined %}
+                                            {% set value = attribute(value, part) %}
+                                        {% else %}
+                                            {% set value = null %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    {% if value is not null and value.format is defined %}
+                                        {{ value|date('Y-m-d H:i:s') }}
+                                    {% elseif value is same as(true) %}
+                                        Oui
+                                    {% elseif value is same as(false) %}
+                                        Non
+                                    {% else %}
+                                        {{ value }}
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                        <span class="text-indigo-500 font-semibold text-sm mt-4 block text-right">Voir les détails →</span>
+                    </a>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        <nav class="flex justify-center gap-2 mt-8">
+            {% if currentPage > 1 %}
+                <a href="{{ path('app_table_view', {'tableName': tableName, 'page': currentPage - 1}) }}" class="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-all duration-200">Précédent</a>
+            {% endif %}
+
+            {% for i in 1..pages %}
+                <a href="{{ path('app_table_view', {'tableName': tableName, 'page': i}) }}" class="px-4 py-2 rounded-lg transition-all duration-200 {% if i == currentPage %}bg-indigo-600 text-white{% else %}bg-gray-200 text-gray-800 hover:bg-gray-300{% endif %}">{{ i }}</a>
+            {% endfor %}
+
+            {% if currentPage < pages %}
+                <a href="{{ path('app_table_view', {'tableName': tableName, 'page': currentPage + 1}) }}" class="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-all duration-200">Suivant</a>
+            {% endif %}
+        </nav>
+    </div>
+</div>
+{% endblock %}

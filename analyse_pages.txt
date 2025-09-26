@@ -1,0 +1,50 @@
+Analyse de la structure du projet (Version 4)
+=============================================
+
+Classification basée sur la règle :
+- **Frontend** : Fichiers responsables du design et de la génération de la page web (HTML, CSS, JS).
+- **Backend** : Fichiers responsables de la logique et du traitement des données (PHP).
+
+---
+
+### Composants Frontend ###
+
+Le frontend est géré par les templates Twig (pour le HTML) et les assets (pour le style et l'interactivité).
+
+**1. Templates Twig (fichiers `.html.twig`)**
+
+*   C:\Users\takot\Desktop\Projet_app_V2\Projet_app_V1\symfony\project_var_1\templates\base.html.twig
+*   C:\Users\takot\Desktop\Projet_app_V2\Projet_app_V1\symfony\project_var_1\templates\dashboard\index.html.twig
+*   C:\Users\takot\Desktop\Projet_app_V2\Projet_app_V1\symfony\project_var_1\templates\home\index.html.twig
+*   C:\Users\takot\Desktop\Projet_app_V2\Projet_app_V1\symfony\project_var_1\templates\registration\register.html.twig
+*   C:\Users\takot\Desktop\Projet_app_V2\Projet_app_V1\symfony\project_var_1\templates\security\login.html.twig
+*   C:\Users\takot\Desktop\Projet_app_V2\Projet_app_V1\symfony\project_var_1\templates\agent\edit.html.twig
+*   C:\Users\takot\Desktop\Projet_app_V2\Projet_app_V1\symfony\project_var_1\templates\agent\index.html.twig
+*   C:\Users\takot\Desktop\Projet_app_V2\Projet_app_V1\symfony\project_var_1\templates\agent\new.html.twig
+*   C:\Users\takot\Desktop\Projet_app_V2\Projet_app_V1\symfony\project_var_1\templates\agent\show.html.twig
+*   C:\Users\takot\Desktop\Projet_app_V2\Projet_app_V1\symfony\project_var_1\templates\agent\show_formations.html.twig
+*   C:\Users\takot\Desktop\Projet_app_V2\Projet_app_V1\symfony\project_var_1\templates\agent\show_passeports.html.twig
+*   C:\Users\takot\Desktop\Projet_app_V2\Projet_app_V1\symfony\project_var_1\templates\intervention\edit.html.twig
+*   C:\Users\takot\Desktop\Projet_app_V2\Projet_app_V1\symfony\project_var_1\templates\intervention\index.html.twig
+*   C:\Users\takot\Desktop\Projet_app_V2\Projet_app_V1\symfony\project_var_1\templates\intervention\new.html.twig
+*   C:\Users\takot\Desktop\Projet_app_V2\Projet_app_V1\symfony\project_var_1\templates\intervention\show.html.twig
+*   C:\Users\takot\Desktop\Projet_app_V2\Projet_app_V1\symfony\project_var_1\templates\table_view\detail.html.twig
+*   C:\Users\takot\Desktop\Projet_app_V2\Projet_app_V1\symfony\project_var_1\templates\table_view\index.html.twig
+
+**2. Assets (dans le dossier `assets/`)**
+
+*   `styles/app.css` : Fichier de style principal.
+*   `app.js` : Fichier JavaScript principal.
+*   `controllers/*.js` : Contrôleurs JavaScript (pour Stimulus) qui ajoutent de l'interactivité.
+
+---
+
+### Composants Backend ###
+
+Le backend est l'ensemble du code PHP qui s'exécute sur le serveur.
+
+*   **Contrôleurs (dans `src/Controller/`)**
+*   **Entités (dans `src/Entity/`)**
+*   **Repositories (dans `src/Repository/`)**
+*   **Formulaires (dans `src/Form/`)**
+*   **Autres (Services, Commandes, etc. dans `src/`)**

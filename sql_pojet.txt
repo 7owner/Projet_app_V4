@@ -1,0 +1,354 @@
+-- ==========================================
+-- Création base
+-- ==========================================
+DROP DATABASE IF EXISTS gestion_projets;
+CREATE DATABASE gestion_projets CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE gestion_projets;
+
+-- ==========================================
+-- TABLES RÉFÉRENTIELLES
+-- ==========================================
+CREATE TABLE adresse (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  libelle VARCHAR(255),
+  ligne1 VARCHAR(255),
+  ligne2 VARCHAR(255),
+  code_postal VARCHAR(40),
+  ville VARCHAR(120),
+  region VARCHAR(120),
+  pays VARCHAR(120),
+  date_debut TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  date_fin TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX idx_adresse_ville_cp ON adresse(ville, code_postal);
+
+CREATE TABLE agence (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  titre VARCHAR(255) NOT NULL,
+  designation VARCHAR(255),
+  adresse_id BIGINT,
+  telephone VARCHAR(50),
+  email VARCHAR(255),
+  date_debut TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  date_fin TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (adresse_id) REFERENCES adresse(id)
+);
+
+CREATE TABLE agent (
+  matricule VARCHAR(20) PRIMARY KEY,
+  nom VARCHAR(255) NOT NULL,
+  admin BOOLEAN DEFAULT FALSE,
+  email VARCHAR(255) UNIQUE,
+  tel VARCHAR(50),
+  actif BOOLEAN DEFAULT TRUE,
+  date_entree DATE,
+  commentaire TEXT,
+  agence_id BIGINT NOT NULL,
+  date_debut TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  date_fin TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (agence_id) REFERENCES agence(id)
+);
+CREATE INDEX idx_agent_agence ON agent(agence_id);
+
+CREATE TABLE passeport (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  agent_matricule VARCHAR(20) UNIQUE,
+  permis TEXT,
+  habilitations TEXT,
+  certifications TEXT,
+  commentaire TEXT,
+  date_debut TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  date_fin TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (agent_matricule) REFERENCES agent(matricule)
+);
+
+CREATE TABLE equipe (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  agence_id BIGINT NOT NULL,
+  nom VARCHAR(255) NOT NULL,
+  description TEXT,
+  date_debut TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  date_fin TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (agence_id) REFERENCES agence(id)
+);
+CREATE INDEX idx_equipe_agence ON equipe(agence_id);
+
+CREATE TABLE agence_membre (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  agence_id BIGINT NOT NULL,
+  agent_matricule VARCHAR(20) NOT NULL,
+  role ENUM('Admin','Manager','Membre') DEFAULT 'Membre',
+  date_debut TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  date_fin TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(agence_id, agent_matricule),
+  FOREIGN KEY (agence_id) REFERENCES agence(id),
+  FOREIGN KEY (agent_matricule) REFERENCES agent(matricule)
+);
+
+CREATE TABLE agent_equipe (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  equipe_id BIGINT NOT NULL,
+  agent_matricule VARCHAR(20) NOT NULL,
+  date_debut TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  date_fin TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(equipe_id, agent_matricule),
+  FOREIGN KEY (equipe_id) REFERENCES equipe(id),
+  FOREIGN KEY (agent_matricule) REFERENCES agent(matricule)
+);
+
+CREATE TABLE fonction (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  code VARCHAR(50) UNIQUE,
+  libelle VARCHAR(255) NOT NULL,
+  description TEXT,
+  date_debut TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  date_fin TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE agent_fonction (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  agent_matricule VARCHAR(20) NOT NULL,
+  fonction_id BIGINT NOT NULL,
+  principal BOOLEAN DEFAULT FALSE,
+  date_debut TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  date_fin TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(agent_matricule, fonction_id),
+  FOREIGN KEY (agent_matricule) REFERENCES agent(matricule),
+  FOREIGN KEY (fonction_id) REFERENCES fonction(id)
+);
+
+CREATE TABLE client (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  nom_client VARCHAR(255) NOT NULL,
+  representant_nom VARCHAR(255),
+  representant_email VARCHAR(255),
+  representant_tel VARCHAR(50),
+  adresse_id BIGINT,
+  commentaire TEXT,
+  date_debut TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  date_fin TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (adresse_id) REFERENCES adresse(id)
+);
+
+CREATE TABLE affaire (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  nom_affaire VARCHAR(255) NOT NULL,
+  client_id BIGINT,
+  description TEXT,
+  date_debut TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  date_fin TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (client_id) REFERENCES client(id)
+);
+
+-- ==========================================
+-- SITES, DOE, MAINTENANCE, INTERVENTIONS
+-- ==========================================
+CREATE TABLE site (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  nom_site VARCHAR(255) NOT NULL,
+  adresse_id BIGINT,
+  commentaire TEXT,
+  date_debut TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  date_fin TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (adresse_id) REFERENCES adresse(id)
+);
+
+CREATE TABLE site_affaire (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  site_id BIGINT NOT NULL,
+  affaire_id BIGINT NOT NULL,
+  date_debut TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  date_fin TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(site_id, affaire_id),
+  FOREIGN KEY (site_id) REFERENCES site(id),
+  FOREIGN KEY (affaire_id) REFERENCES affaire(id)
+);
+
+CREATE TABLE doe (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  site_id BIGINT NOT NULL,
+  affaire_id BIGINT NOT NULL,
+  titre VARCHAR(255) NOT NULL,
+  description TEXT,
+  date_debut TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  date_fin TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(site_id, affaire_id, titre),
+  FOREIGN KEY (site_id) REFERENCES site(id),
+  FOREIGN KEY (affaire_id) REFERENCES affaire(id)
+);
+
+CREATE TABLE maintenance (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  doe_id BIGINT NOT NULL,
+  affaire_id BIGINT NOT NULL,
+  titre VARCHAR(255),
+  description TEXT NOT NULL,
+  etat ENUM('Pas_commence','En_cours','Termine') DEFAULT 'Pas_commence',
+  responsable VARCHAR(20),
+  date_debut TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  date_fin TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (doe_id) REFERENCES doe(id),
+  FOREIGN KEY (affaire_id) REFERENCES affaire(id),
+  FOREIGN KEY (responsable) REFERENCES agent(matricule)
+);
+
+CREATE TABLE intervention (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  maintenance_id BIGINT NOT NULL,
+  description TEXT NOT NULL,
+  date_debut DATE NOT NULL,
+  date_fin DATE,
+  intervention_precedente_id BIGINT,
+  date_debut_ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  date_fin_ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (maintenance_id) REFERENCES maintenance(id),
+  FOREIGN KEY (intervention_precedente_id) REFERENCES intervention(id)
+);
+
+CREATE TABLE rendez_vous (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  site_id BIGINT NOT NULL,
+  intervention_id BIGINT,
+  sujet ENUM('maintenance','intervention') NOT NULL,
+  date_rdv DATE NOT NULL,
+  heure_rdv TIME,
+  description TEXT,
+  statut ENUM('Planifie','Confirme','Termine','Annule') DEFAULT 'Planifie',
+  date_debut TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  date_fin TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (site_id) REFERENCES site(id),
+  FOREIGN KEY (intervention_id) REFERENCES intervention(id)
+);
+
+CREATE TABLE rapport_maintenance (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  maintenance_id BIGINT NOT NULL,
+  date_rapport TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  matricule VARCHAR(20) NOT NULL,
+  nom_client VARCHAR(255),
+  adresse_client_id BIGINT,
+  commentaire_interne TEXT,
+  materiel_commander TEXT,
+  etat ENUM('Pas_commence','En_cours','Termine') DEFAULT 'Pas_commence',
+  date_debut TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  date_fin TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (maintenance_id) REFERENCES maintenance(id),
+  FOREIGN KEY (matricule) REFERENCES agent(matricule),
+  FOREIGN KEY (adresse_client_id) REFERENCES adresse(id)
+);
+
+-- ==========================================
+-- FORMATIONS
+-- ==========================================
+CREATE TABLE formation (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  agent_matricule VARCHAR(20) NOT NULL,
+  type ENUM('Habilitation','Certification','Permis') NOT NULL,
+  libelle VARCHAR(255) NOT NULL,
+  date_obtention DATE,
+  date_expiration DATE,
+  organisme VARCHAR(255),
+  commentaire TEXT,
+  date_debut TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  date_fin TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (agent_matricule) REFERENCES agent(matricule)
+);
+
+-- ==========================================
+-- IMAGES
+-- ==========================================
+CREATE TABLE images (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  nom_fichier VARCHAR(255) NOT NULL,
+  type_mime VARCHAR(100) DEFAULT 'image/jpeg',
+  taille_octets BIGINT NOT NULL,
+  image_blob LONGBLOB NOT NULL,
+  commentaire_image TEXT,
+  auteur_matricule VARCHAR(20),
+  date_debut TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  date_fin TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (auteur_matricule) REFERENCES agent(matricule)
+);
+
+CREATE TABLE rendez_vous_image (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  rendez_vous_id BIGINT NOT NULL,
+  image_id BIGINT NOT NULL,
+  UNIQUE(rendez_vous_id,image_id),
+  FOREIGN KEY (rendez_vous_id) REFERENCES rendez_vous(id),
+  FOREIGN KEY (image_id) REFERENCES images(id)
+);
+
+CREATE TABLE rendu_intervention (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  intervention_id BIGINT NOT NULL,
+  resume TEXT,
+  valeur TEXT,
+  date_debut TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  date_fin TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (intervention_id) REFERENCES intervention(id)
+);
+
+CREATE TABLE rendu_intervention_image (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  rendu_intervention_id BIGINT NOT NULL,
+  image_id BIGINT NOT NULL,
+  UNIQUE(rendu_intervention_id,image_id),
+  FOREIGN KEY (rendu_intervention_id) REFERENCES rendu_intervention(id),
+  FOREIGN KEY (image_id) REFERENCES images(id)
+);
+
+-- ==========================================
+-- DOCUMENTS (non-images)
+-- ==========================================
+CREATE TABLE documents_repertoire (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  cible_type ENUM('Affaire','Agent','Agence','Adresse','Client','Site','RendezVous','DOE',
+                  'Maintenance','Intervention','RapportMaintenance','Achat','Facture',
+                  'Reglement','Formation','Fonction') NOT NULL,
+  cible_id BIGINT NOT NULL,
+  nature ENUM('Document','Video','Audio','Autre') DEFAULT 'Document',
+  nom_fichier VARCHAR(255) NOT NULL,
+  type_mime VARCHAR(100) DEFAULT 'application/octet-stream',
+  taille_octets BIGINT,
+  chemin_fichier VARCHAR(1024),
+  checksum_sha256 VARCHAR(64),
+  auteur_matricule VARCHAR(20),
+  date_debut TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  date_fin TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (auteur_matricule) REFERENCES agent(matricule)
+);
+
+-- ==========================================
+-- VUES
+-- ==========================================
+CREATE OR REPLACE VIEW v_agents_agences AS
+SELECT a.matricule, a.nom, a.email, a.tel, a.actif,
+       a.agence_id AS agence_principale_id,
+       ag.titre    AS agence_principale_titre
+FROM agent a
+LEFT JOIN agence ag ON ag.id = a.agence_id;
+
+CREATE OR REPLACE VIEW v_site_affaires AS
+SELECT sa.id AS site_affaire_id,
+       s.id AS site_id, s.nom_site,
+       af.id AS affaire_id, af.nom_affaire,
+       c.id AS client_id, c.nom_client
+FROM site_affaire sa
+JOIN site s ON s.id = sa.site_id
+JOIN affaire af ON af.id = sa.affaire_id
+LEFT JOIN client c ON c.id = af.client_id;
+
+CREATE OR REPLACE VIEW v_doe_complet AS
+SELECT d.id AS doe_id, d.titre AS doe_titre,
+       s.nom_site,
+       af.nom_affaire,
+       m.id AS maintenance_id, m.titre AS maintenance_titre, m.etat AS maintenance_etat,
+       i.id AS intervention_id, i.date_debut AS intervention_debut, i.date_fin AS intervention_fin,
+       r.id AS rdv_id, r.date_rdv, r.heure_rdv, r.statut AS rdv_statut
+FROM doe d
+JOIN site s ON s.id = d.site_id
+JOIN affaire af ON af.id = d.affaire_id
+LEFT JOIN maintenance m ON m.doe_id = d.id
+LEFT JOIN intervention i ON i.maintenance_id = m.id
+LEFT JOIN rendez_vous r ON r.intervention_id = i.id;

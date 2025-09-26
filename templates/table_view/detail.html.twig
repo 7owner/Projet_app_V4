@@ -1,0 +1,261 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}✨ Détails - {{ tableName }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+<div class="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 text-gray-900">
+    <div class="container mx-auto px-6 py-10 max-w-6xl">
+
+        <!-- Titre principal -->
+        <h1 class="text-4xl font-extrabold text-white tracking-tight mb-10">
+            {{ tableName }} - Détails
+        </h1>
+
+        <!-- Carte des détails -->
+        <div class="bg-white bg-opacity-90 backdrop-blur-lg p-8 rounded-2xl shadow-2xl border border-gray-200 transition transform hover:scale-[1.01] hover:shadow-indigo-400/50 mb-12">
+            <ul class="space-y-4 text-sm text-gray-700">
+                {% for property, value in entity %}
+                    <li class="flex items-start gap-2">
+                        <span class="text-indigo-500">•</span>
+                        <span>
+                            <strong class="font-semibold text-gray-900">{{ property }}:</strong>
+                            {% if value is not null and value.format is defined %}
+                                {{ value|date('Y-m-d H:i:s') }}
+                            {% elseif value is same as(true) %}
+                                ✅ Oui
+                            {% elseif value is same as(false) %}
+                                ❌ Non
+                            {% elseif value is iterable %}
+                                {% if value is empty %}
+                                    Aucun
+                                {% else %}
+                                    <ul class="ml-6 list-disc text-gray-600">
+                                        {% for item in value %}
+                                            <li>{{ item.id is defined ? item.id : item }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% endif %}
+                            {% else %}
+                                {{ value }}
+                            {% endif %}
+                        </span>
+                    </li>
+                {% endfor %}
+            </ul>
+            <a href="{{ path('app_table_view', {'tableName': tableName}) }}" 
+               class="inline-flex items-center mt-6 text-indigo-600 font-semibold text-sm hover:underline transition">
+                ← Retour à la liste
+            </a>
+        </div>
+
+        <!-- DOEs associés (pour Site) -->
+        {% if tableName == 'Site' and associatedDoes is not empty %}
+            <div class="bg-white bg-opacity-95 p-8 rounded-2xl shadow-lg border-l-8 border-yellow-400 mb-12">
+                <h3 class="text-xl font-bold text-gray-900 mb-6">📑 DOEs Associés</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for doe in associatedDoes %}
+                        <div class="p-5 bg-gray-50 rounded-xl shadow hover:shadow-lg transition space-y-3">
+                            <div class="flex items-start justify-between gap-3">
+                                <h4 class="text-base font-semibold text-indigo-600">
+                                    <a href="{{ path('app_table_view_detail', {'tableName': 'Doe', 'id': doe.id}) }}" 
+                                       class="hover:underline">{{ doe.titre }}</a>
+                                </h4>
+                                {# Badge d’état si disponible #}
+                                {% set _etat = doe.etat|default(null) %}
+                                {% if _etat %}
+                                    {% set badge = 'bg-gray-100 text-gray-800' %}
+                                    {% if _etat == 'Terminé' %}
+                                        {% set badge = 'bg-green-100 text-green-800' %}
+                                    {% elseif _etat == 'En cours' %}
+                                        {% set badge = 'bg-yellow-100 text-yellow-800' %}
+                                    {% elseif _etat == 'En attente' %}
+                                        {% set badge = 'bg-red-100 text-red-800' %}
+                                    {% endif %}
+                                    <span class="px-2 py-0.5 text-xs font-semibold rounded-full {{ badge }}">{{ _etat }}</span>
+                                {% endif %}
+                            </div>
+
+                            <div class="space-y-3">
+                                <p class="text-sm"><strong>Description:</strong> {{ doe.description }}</p>
+                                <p class="text-sm"><strong>Affaire:</strong> {{ doe.affaire.nomAffaire }}</p>
+                            </div>
+
+                            <div class="pt-1">
+                                <a href="{{ path('app_table_view_detail', {'tableName': 'Doe', 'id': doe.id}) }}" 
+                                   class="inline-block text-xs bg-indigo-500 text-white px-3 py-1.5 rounded-full hover:bg-indigo-600 transition shadow">
+                                   Voir le DOE →
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Maintenances associées (pour Site) -->
+        {% if tableName == 'Site' and associatedMaintenances is not empty %}
+            <div class="bg-white bg-opacity-95 p-8 rounded-2xl shadow-lg border-l-8 border-green-400 mb-12">
+                <h3 class="text-xl font-bold text-gray-900 mb-6">🛠️ Maintenances Associées</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for maintenance in associatedMaintenances %}
+                        <div class="p-5 bg-gray-50 rounded-xl shadow hover:shadow-lg transition space-y-3">
+                            <h4 class="text-base font-semibold text-green-600">
+                                <a href="{{ path('app_table_view_detail', {'tableName': 'Maintenance', 'id': maintenance.id}) }}" 
+                                   class="hover:underline">{{ maintenance.titre }}</a>
+                            </h4>
+
+                            <div class="space-y-3">
+                                <p class="text-sm"><strong>Description:</strong> {{ maintenance.description }}</p>
+                                <p class="text-sm">
+                                    <strong>État:</strong> 
+                                    {% if maintenance.etat == 'Terminé' %}
+                                        <span class="text-green-600 font-semibold">✔ {{ maintenance.etat }}</span>
+                                    {% elseif maintenance.etat == 'En cours' %}
+                                        <span class="text-yellow-500 font-semibold">⏳ {{ maintenance.etat }}</span>
+                                    {% else %}
+                                        <span class="text-red-600 font-semibold">❌ {{ maintenance.etat }}</span>
+                                    {% endif %}
+                                </p>
+                                <p class="text-sm"><strong>Responsable:</strong> {{ maintenance.responsable.nom }}</p>
+                            </div>
+
+                            {% if maintenance.associatedRapports is not empty %}
+                                <h5 class="mt-2 text-sm font-bold text-gray-800">📋 Rapports</h5>
+                                <ul class="ml-5 list-disc text-sm space-y-2">
+                                    {% for rapport in maintenance.associatedRapports %}
+                                        <li>
+                                            Rapport #{{ rapport.id }} ({{ rapport.dateRapport|date('Y-m-d') }})
+                                            <a href="{{ path('app_table_view_detail', {'tableName': 'Rapport', 'id': rapport.id}) }}" 
+                                               class="ml-2 inline-block text-xs bg-indigo-500 text-white px-3 py-1 rounded-full hover:bg-indigo-600 transition">
+                                                Voir le rapport
+                                            </a>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Rapports de maintenance (si tableName = Maintenance) -->
+        {% if tableName == 'Maintenance' and associatedRapports is not empty %}
+            <div class="bg-white bg-opacity-95 p-8 rounded-2xl shadow-lg border-l-8 border-indigo-400 mb-12">
+                <h3 class="text-xl font-bold text-gray-900 mb-6">📋 Rapports de Maintenance</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for rapport in associatedRapports %}
+                        <div class="p-5 bg-gray-50 rounded-xl shadow hover:shadow-lg transition space-y-3">
+                            <h4 class="text-base font-semibold text-indigo-600">Rapport #{{ rapport.id }} - {{ rapport.dateRapport|date('Y-m-d') }}</h4>
+
+                            <div class="space-y-3">
+                                <p class="text-sm"><strong>Agent:</strong> {{ rapport.agent.nom }} {{ rapport.agent.prenom }}</p>
+                                <p class="text-sm">
+                                    <strong>État:</strong>
+                                    {% if rapport.etat == 'Terminé' %}
+                                        <span class="text-green-600 font-semibold">✔ {{ rapport.etat }}</span>
+                                    {% elseif rapport.etat == 'En cours' %}
+                                        <span class="text-yellow-500 font-semibold">⏳ {{ rapport.etat }}</span>
+                                    {% else %}
+                                        <span class="text-red-600 font-semibold">❌ {{ rapport.etat }}</span>
+                                    {% endif %}
+                                </p>
+                                <p class="text-sm"><strong>Commentaire:</strong> {{ rapport.commentaireInterne }}</p>
+                            </div>
+
+                            <a href="{{ path('app_table_view_detail', {'tableName': 'Rapport', 'id': rapport.id}) }}" 
+                               class="inline-block mt-2 bg-indigo-500 text-white font-semibold text-sm py-2 px-4 rounded-lg hover:bg-indigo-600 transition">
+                               Voir le rapport complet →
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Rendus d'intervention (si tableName = Maintenance) -->
+        {% if tableName == 'Maintenance' and associatedRendus is not empty %}
+            <div class="bg-white bg-opacity-95 p-8 rounded-2xl shadow-lg border-l-8 border-pink-400 mb-12">
+                <h3 class="text-xl font-bold text-gray-900 mb-6">📑 Rendus d'Intervention</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% for rendu in associatedRendus %}
+                        <div class="p-5 bg-gray-50 rounded-xl shadow hover:shadow-lg transition space-y-3">
+                            <h4 class="text-base font-semibold text-pink-600">Rendu #{{ rendu.id }} - Intervention #{{ rendu.intervention.id }}</h4>
+
+                            <div class="space-y-3">
+                                <p class="text-sm"><strong>Résumé:</strong> {{ rendu.resume }}</p>
+                                <p class="text-sm"><strong>Valeur:</strong> {{ rendu.valeur }}</p>
+                            </div>
+
+                            <a href="{{ path('app_table_view_detail', {'tableName': 'Rendu', 'id': rendu.id}) }}" 
+                               class="inline-block mt-2 bg-pink-500 text-white font-semibold text-sm py-2 px-4 rounded-lg hover:bg-pink-600 transition">
+                               Voir le rendu →
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Documents associés -->
+        {% if (tableName in ['Doe','Client','Maintenance','Site']) and associatedDocuments is not empty %}
+            <div class="bg-white bg-opacity-95 p-8 rounded-2xl shadow-lg border-l-8 border-indigo-400 mb-12">
+                <h3 class="text-xl font-bold text-gray-900 mb-6">📂 Documents Associés</h3>
+                
+                <!-- Images -->
+                <h4 class="text-lg font-semibold text-indigo-700 mb-4">🖼️ Images</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% set hasImages = false %}
+                    {% for document in associatedDocuments %}
+                        {% if document.typeMime starts with 'image/' %}
+                            {% set hasImages = true %}
+                            <div class="bg-gray-50 rounded-xl p-4 shadow hover:shadow-lg transition space-y-3">
+                                <img src="{{ path('app_document_view', {'id': document.id}) }}" 
+                                     alt="{{ document.nomFichier }}" 
+                                     class="w-full h-40 object-cover rounded-lg mb-3">
+                                <h5 class="font-semibold">{{ document.nomFichier }}</h5>
+                                <p class="text-xs text-gray-600">Nature: {{ document.nature }}</p>
+                                <a href="{{ path('app_document_download', {'id': document.id}) }}" target="_blank" 
+                                   class="inline-block mt-3 bg-indigo-500 text-white text-xs px-3 py-1 rounded-full hover:bg-indigo-600">
+                                   Télécharger
+                                </a>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                    {% if not hasImages %}
+                        <p class="text-sm text-gray-500">Aucune image associée.</p>
+                    {% endif %}
+                </div>
+
+                <!-- Autres documents -->
+                <h4 class="text-lg font-semibold text-indigo-700 mt-8 mb-4">📑 Autres Documents</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% set hasOtherDocs = false %}
+                    {% for document in associatedDocuments %}
+                        {% if not (document.typeMime starts with 'image/') %}
+                            {% set hasOtherDocs = true %}
+                            <div class="bg-gray-50 rounded-xl p-4 shadow hover:shadow-lg transition space-y-3">
+                                <h5 class="font-semibold">{{ document.nomFichier }}</h5>
+                                <p class="text-xs text-gray-600">Type: {{ document.typeMime }}</p>
+                                <p class="text-xs text-gray-600">Nature: {{ document.nature }}</p>
+                                <a href="{{ path('app_document_download', {'id': document.id}) }}" target="_blank" 
+                                   class="inline-block mt-3 bg-indigo-500 text-white text-xs px-3 py-1 rounded-full hover:bg-indigo-600">
+                                   Télécharger
+                                </a>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                    {% if not hasOtherDocs %}
+                        <p class="text-sm text-gray-500">Aucun autre document associé.</p>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

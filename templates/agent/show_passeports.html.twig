@@ -1,0 +1,86 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Passeports de {{ agent.nom }} {{ agent.prenom }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome pour icônes -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+<div class="container my-5">
+    <div class="card shadow-lg border-0 rounded-4">
+        <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between rounded-top-4">
+            <h3 class="mb-0">
+                <i class="fas fa-id-card me-2"></i>
+                Passeports de {{ agent.nom }} {{ agent.prenom }}
+            </h3>
+            <a href="{{ path('app_agent_index') }}" class="btn btn-sm btn-light">
+                <i class="fas fa-arrow-left"></i> Retour à la liste
+            </a>
+        </div>
+
+        <div class="card-body p-4">
+            {% if passeports is not empty %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col"><i class="fas fa-car me-1 text-secondary"></i> Permis</th>
+                                <th scope="col"><i class="fas fa-shield-halved me-1 text-secondary"></i> Habilitations</th>
+                                <th scope="col"><i class="fas fa-certificate me-1 text-secondary"></i> Certifications</th>
+                                <th scope="col"><i class="fas fa-comment-dots me-1 text-secondary"></i> Commentaire</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for passeport in passeports %}
+                                <tr>
+                                    <td class="fw-bold text-primary">#{{ passeport.id }}</td>
+                                    <td>{{ passeport.permis|nl2br }}</td>
+                                    <td>
+                                        {% if passeport.habilitations %}
+                                            <span class="badge bg-info text-dark">{{ passeport.habilitations|nl2br }}</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if passeport.certifications %}
+                                            <span class="badge bg-success">{{ passeport.certifications|nl2br }}</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if passeport.commentaire %}
+                                            <p class="mb-0 text-muted small">{{ passeport.commentaire|nl2br }}</p>
+                                        {% else %}
+                                            <span class="text-muted">Aucun</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-warning d-flex align-items-center" role="alert">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <div>
+                        Cet agent n’a <strong>aucun passeport</strong> enregistré.
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

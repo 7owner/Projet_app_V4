@@ -1,0 +1,145 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails Intervention #{{ intervention.id }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+<div class="container my-5">
+
+    <!-- 🟦 En-tête -->
+    <div class="card shadow-lg border-0 rounded-4 mb-4">
+        <div class="card-header bg-primary text-white rounded-top-4">
+            <h3 class="mb-0">
+                <i class="fas fa-wrench me-2"></i> Intervention #{{ intervention.id }}
+            </h3>
+        </div>
+    </div>
+
+    <!-- 🔎 Filtres rapides -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <form method="get" action="{{ path('app_intervention_index') }}" class="row g-3">
+                <input type="hidden" name="maintenance" value="{{ intervention.maintenance.titre }}">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Même maintenance :</label>
+                    <button class="btn btn-outline-info w-100">
+                        <i class="fas fa-link"></i> Voir toutes les interventions liées
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Depuis le</label>
+                    <input type="date" name="dateDebut" class="form-control">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Jusqu’au</label>
+                    <input type="date" name="dateFin" class="form-control">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="fas fa-filter"></i> Filtrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 📋 Table des détails -->
+    <div class="card shadow-lg border-0 rounded-4">
+        <div class="card-body p-4">
+            <table class="table table-borderless align-middle">
+                <tbody>
+                    <tr>
+                        <th style="width: 220px;">ID</th>
+                        <td class="fw-bold text-primary">#{{ intervention.id }}</td>
+                    </tr>
+                    <tr>
+                        <th>Maintenance</th>
+                        <td>
+                            <span class="fw-semibold">{{ intervention.maintenance.titre }}</span>
+                            <br><small class="text-muted">ID : {{ intervention.maintenance.id }}</small>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Description</th>
+                        <td>
+                            {% if intervention.description %}
+                                <span class="badge bg-light text-dark p-2">{{ intervention.description|nl2br }}
+</span>
+                            {% else %}
+                                <span class="text-muted">Aucune description</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Date de début</th>
+                        <td>
+                            {% if intervention.dateDebut %}
+                                <span class="badge bg-info text-dark">
+                                    {{ intervention.dateDebut|date('d/m/Y') }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted">Non définie</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Date de fin</th>
+                        <td>
+                            {% if intervention.dateFin %}
+                                <span class="badge bg-success">
+                                    {{ intervention.dateFin|date('d/m/Y') }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted">Non définie</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Intervention précédente</th>
+                        <td>
+                            {% if intervention.interventionPrecedente %}
+                                <a href="{{ path('app_intervention_show', {'id': intervention.interventionPrecedente.id}) }}" class="text-decoration-none">
+                                    <i class="fas fa-link text-primary"></i>
+                                    Intervention #{{ intervention.interventionPrecedente.id }}
+                                </a>
+                            {% else %}
+                                <span class="text-muted">Aucune</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- ⚡ Actions -->
+            <div class="d-flex justify-content-between mt-4">
+                <div>
+                    <a href="{{ path('app_intervention_edit', {'id': intervention.id}) }}" class="btn btn-warning me-2">
+                        <i class="fas fa-edit"></i> Modifier
+                    </a>
+                    <form method="post" action="{{ path('app_intervention_delete', {'id': intervention.id}) }}" 
+                          onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette intervention ?');" 
+                          style="display:inline-block;">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ intervention.id) }}">
+                        <button class="btn btn-danger">
+                            <i class="fas fa-trash"></i> Supprimer
+                        </button>
+                    </form>
+                </div>
+                <a href="{{ path('app_intervention_index') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-list"></i> Retour à la liste
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

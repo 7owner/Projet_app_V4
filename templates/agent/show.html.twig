@@ -1,0 +1,136 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Agent {{ agent.nom }} {{ agent.prenom }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+<div class="container my-5">
+    <div class="card shadow-lg border-0 rounded-4">
+        <div class="card-header bg-primary text-white d-flex align-items-center justify-content-between rounded-top-4">
+            <h3 class="mb-0">
+                <i class="fas fa-user me-2"></i> Agent {{ agent.nom }} {{ agent.prenom }}
+            </h3>
+            <a href="{{ path('app_agent_index') }}" class="btn btn-sm btn-light">
+                <i class="fas fa-arrow-left"></i> Retour à la liste
+            </a>
+        </div>
+
+        <div class="card-body p-4">
+            <table class="table table-borderless align-middle mb-4">
+                <tbody>
+                    <tr>
+                        <th class="text-secondary w-25">Matricule</th>
+                        <td class="fw-bold">{{ agent.matricule }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-secondary">Nom</th>
+                        <td>{{ agent.nom }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-secondary">Prénom</th>
+                        <td>{{ agent.prenom }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-secondary">Email</th>
+                        <td><a href="mailto:{{ agent.email }}" class="text-decoration-none"><i class="fas fa-envelope me-2 text-muted"></i>{{ agent.email }}</a></td>
+                    </tr>
+                    <tr>
+                        <th class="text-secondary">Téléphone</th>
+                        <td><i class="fas fa-phone me-2 text-muted"></i>{{ agent.tel }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-secondary">Actif</th>
+                        <td>
+                            {% if agent.actif %}
+                                <span class="badge bg-success"><i class="fas fa-check"></i> Oui</span>
+                            {% else %}
+                                <span class="badge bg-danger"><i class="fas fa-times"></i> Non</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="text-secondary">Administrateur</th>
+                        <td>
+                            {% if agent.admin %}
+                                <span class="badge bg-info"><i class="fas fa-user-shield"></i> Oui</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Non</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="text-secondary">Date d'entrée</th>
+                        <td>{{ agent.dateEntree ? agent.dateEntree|date('d/m/Y') : '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-secondary">Commentaire</th>
+                        <td>{{ agent.commentaire ?: '-' }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-secondary">Agence</th>
+                        <td><span class="fw-semibold">{{ agent.agence.titre }}</span></td>
+                    </tr>
+                    <tr>
+                        <th class="text-secondary">Fonctions</th>
+                        <td>
+                            {% if agent.agentFonctions is not empty %}
+                                <ul class="mb-0">
+                                    {% for agentFonction in agent.agentFonctions %}
+                                        <li>
+                                            {{ agentFonction.fonction.libelle }}
+                                            {% if agentFonction.principal %}
+                                                <span class="badge bg-primary">Principal</span>
+                                            {% endif %}
+                                            {% if agentFonction.dateDebut %}
+                                                <small class="text-muted">(Depuis {{ agentFonction.dateDebut|date('d/m/Y') }})</small>
+                                            {% endif %}
+                                            {% if agentFonction.dateFin %}
+                                                <small class="text-muted">(Jusqu'au {{ agentFonction.dateFin|date('d/m/Y') }})</small>
+                                            {% endif %}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <span class="text-muted">Aucune fonction attribuée.</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="text-secondary">Passeports</th>
+                        <td>
+                            <a href="{{ path('app_agent_show_passeports', {'matricule': agent.matricule}) }}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-id-card me-1"></i> Voir les {{ agent.passeports|length }} passeport(s)
+                            </a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="text-secondary">Formations</th>
+                        <td>
+                            <a href="{{ path('app_agent_show_formations', {'matricule': agent.matricule}) }}" class="btn btn-outline-success btn-sm">
+                                <i class="fas fa-graduation-cap me-1"></i> Voir les {{ agent.formations|length }} formation(s)
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="d-flex gap-2">
+                <a href="{{ path('app_agent_edit', {'matricule': agent.matricule}) }}" class="btn btn-warning">
+                    <i class="fas fa-edit me-1"></i> Modifier
+                </a>
+                <form method="post" action="{{ path('app_agent_delete', {'matricule': agent.matricule}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet agent ?');">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ agent.matricule) }}">
+                    <button class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i> Supprimer
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

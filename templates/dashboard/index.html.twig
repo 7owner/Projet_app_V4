@@ -1,0 +1,133 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tableau de bord - Maintenance{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+<div class="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-purple-600 text-gray-800">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <!-- Métriques principales -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white bg-opacity-90 backdrop-blur-lg p-6 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-lg flex items-center justify-center text-white text-lg">
+                        🔧
+                    </div>
+                </div>
+                <div class="text-3xl font-bold text-gray-800">{{ activeMaintenances }}</div>
+                <div class="text-sm uppercase text-gray-500 font-semibold tracking-wide">Maintenances actives</div>
+                <div class="text-sm text-green-600 mt-2"></div>
+            </div>
+
+            <div class="bg-white bg-opacity-90 backdrop-blur-lg p-6 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="w-10 h-10 bg-gradient-to-br from-green-400 to-teal-500 rounded-lg flex items-center justify-center text-white text-lg">
+                        ⚡
+                    </div>
+                </div>
+                <div class="text-3xl font-bold text-gray-800">{{ ongoingInterventions }}</div>
+                <div class="text-sm uppercase text-gray-500 font-semibold tracking-wide">Interventions en cours</div>
+                <div class="text-sm text-green-600 mt-2"></div>
+            </div>
+
+            <div class="bg-white bg-opacity-90 backdrop-blur-lg p-6 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center text-white text-lg">
+                        👨‍🔧
+                    </div>
+                </div>
+                <div class="text-3xl font-bold text-gray-800">{{ activeAgents }}</div>
+                <div class="text-sm uppercase text-gray-500 font-semibold tracking-wide">Agents actifs</div>
+                <div class="text-sm text-green-600 mt-2"></div>
+            </div>
+
+            <div class="bg-white bg-opacity-90 backdrop-blur-lg p-6 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100">
+                <div class="flex justify-between items-center mb-4">
+                    <div class="w-10 h-10 bg-gradient-to-br from-purple-400 to-indigo-500 rounded-lg flex items-center justify-center text-white text-lg">
+                        🏢
+                    </div>
+                </div>
+                <div class="text-3xl font-bold text-gray-800">{{ sitesUnderContract }}</div>
+                <div class="text-sm uppercase text-gray-500 font-semibold tracking-wide">Sites sous contrat</div>
+                <div class="text-sm text-green-600 mt-2"></div>
+            </div>
+        </div>
+
+        <!-- Section graphiques -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            <div class="lg:col-span-2 bg-white bg-opacity-90 backdrop-blur-lg p-6 rounded-xl shadow-lg">
+                <div class="text-lg font-semibold text-gray-800 mb-4">📊 Évolution des maintenances par mois</div>
+                <canvas id="monthlyMaintenanceChart" data-controller="chart" data-chart-labels-value="{{ monthlyMaintenanceLabels|raw }}" data-chart-data-value="{{ monthlyMaintenanceData|raw }}"></canvas>
+            </div>
+
+            <div class="bg-white bg-opacity-90 backdrop-blur-lg p-6 rounded-xl shadow-lg">
+                <div class="text-lg font-semibold text-gray-800 mb-4">🚨 Maintenances urgentes</div>
+                <div class="max-h-96 overflow-y-auto space-y-4">
+                    {% if urgentMaintenances is not empty %}
+                        {% for maintenance in urgentMaintenances %}
+                            <div class="flex justify-between items-center p-4 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+                                <div>
+                                    <h4 class="text-gray-800 font-semibold">{{ maintenance.titre }} - {{ maintenance.affaire.nomAffaire }}</h4>
+                                    <p class="text-gray-500 text-sm">Motif de blocage: {{ maintenance.motifBlocage }}</p>
+                                </div>
+                                <span class="px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800">Bloqué</span>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-gray-500 text-sm">Aucune maintenance urgente (bloquée) pour le moment.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Accès aux tables détaillées -->
+       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+           <!--  <a href="{{ path('app_table_view', {'tableName': 'Maintenance'}) }}" class="relative bg-white bg-opacity-90 backdrop-blur-lg p-6 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100">
+                <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-t-xl"></div>
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">📋 Table MAINTENANCE</h3>
+                <p class="text-gray-500 text-sm flex-grow">Gérer les maintenances planifiées et en cours.</p>
+                <span class="text-indigo-500 font-semibold text-sm mt-4 block text-right">Voir plus →</span>
+            </a>
+
+            <a href="{{ path('app_table_view', {'tableName': 'Intervention'}) }}" class="relative bg-white bg-opacity-90 backdrop-blur-lg p-6 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100">
+                <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-t-xl"></div>
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">⚙️ Table INTERVENTION</h3>
+                <p class="text-gray-500 text-sm flex-grow">Consulter et planifier les interventions.</p>
+                <span class="text-indigo-500 font-semibold text-sm mt-4 block text-right">Voir plus →</span>
+            </a>
+
+            <a href="{{ path('app_table_view', {'tableName': 'Agent'}) }}" class="relative bg-white bg-opacity-90 backdrop-blur-lg p-6 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100">
+                <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-t-xl"></div>
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">👨‍🔧 Table AGENT</h3>
+                <p class="text-gray-500 text-sm flex-grow">Gérer les informations des agents et leurs compétences.</p>
+                <span class="text-indigo-500 font-semibold text-sm mt-4 block text-right">Voir plus →</span>
+            </a>-->
+
+            <a href="{{ path('app_table_view', {'tableName': 'Site'}) }}" class="relative bg-white bg-opacity-90 backdrop-blur-lg p-6 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100">
+                <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-t-xl"></div>
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">📍 Table SITE</h3>
+                <p class="text-gray-500 text-sm flex-grow">Administrer les sites et leurs affaires associées.</p>
+                <span class="text-indigo-500 font-semibold text-sm mt-4 block text-right">Voir plus →</span>
+            </a>
+
+            <a href="{{ path('app_table_view', {'tableName': 'Facture'}) }}" class="relative bg-white bg-opacity-90 backdrop-blur-lg p-6 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100">
+                <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-t-xl"></div>
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">💰 Table FACTURE</h3>
+                <p class="text-gray-500 text-sm flex-grow">Suivre la facturation des prestations.</p>
+                <span class="text-indigo-500 font-semibold text-sm mt-4 block text-right">Voir plus →</span>
+            </a>
+
+            <a href="{{ path('app_table_view', {'tableName': 'DocumentsRepertoire'}) }}" class="relative bg-white bg-opacity-90 backdrop-blur-lg p-6 rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-gray-100">
+                <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-t-xl"></div>
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">📁 Table DOCUMENTS_REPERTOIRE</h3>
+                <p class="text-gray-500 text-sm flex-grow">Accéder aux documents et médias liés aux entités.</p>
+                <span class="text-indigo-500 font-semibold text-sm mt-4 block text-right">Voir plus →</span>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

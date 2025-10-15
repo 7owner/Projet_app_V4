@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y \
     libzip-dev \
     libpq-dev \
     unzip \
+    wget \
     && docker-php-ext-install \
     intl \
     opcache \

@@ -1,13 +1,14 @@
-# Use an official PHP image with Apache
+# Utiliser l'image officielle PHP avec Apache
 FROM php:8.2-apache
 
-# Install system dependencies
+# Installer les dépendances système et PHP nécessaires
 RUN apt-get update && apt-get install -y \
+    git \
+    unzip \
+    wget \
     libicu-dev \
     libzip-dev \
     libpq-dev \
-    unzip \
-    wget \
     && docker-php-ext-install \
     intl \
     opcache \
@@ -15,30 +16,40 @@ RUN apt-get update && apt-get install -y \
     zip \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Symfony CLI
-RUN wget https://get.symfony.com/cli/installer -O - | bash && mv /root/.symfony5/bin/symfony /usr/local/bin/symfony
+# Installer la CLI Symfony (correction du chemin .symfony5 → .symfony*/bin)
+RUN wget https://get.symfony.com/cli/installer -O - | bash \
+    && mv /root/.symfony*/bin/symfony /usr/local/bin/symfony
 
-# Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# Installer Composer (à partir de l'image officielle)
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Set Composer to allow superuser
+# Autoriser Composer à tourner en root (obligatoire dans Docker)
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
-# Set the working directory
+# Définir le dossier de travail
 WORKDIR /var/www/html
 
-# Copy the project files
+# Copier le contenu du projet
 COPY . .
 
-# Install Composer dependencies
-RUN composer install --no-dev --optimize-autoloader
+# Installer les dépendances Symfony
+# --no-scripts évite les erreurs liées à symfony-cmd si Flex n’est pas actif
+RUN composer install --no-dev --optimize-autoloader --no-scripts
 
-# Set the correct permissions
+# Régénérer l’autoload après installation
+RUN composer dump-autoload --optimize
+
+# Donner les bons droits à Apache
 RUN chown -R www-data:www-data var
 
-# Configure Apache
+# Activer le module rewrite pour Symfony
 RUN a2enmod rewrite
+
+# Copier la configuration Apache spécifique
 COPY .docker/apache/000-default.conf /etc/apache2/sites-available/000-default.conf
 
-# Expose port 80
+# Exposer le port HTTP
 EXPOSE 80
+
+# Commande de démarrage par défaut
+CMD ["apache2-foreground"]

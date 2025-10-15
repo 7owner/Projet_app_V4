@@ -1,29 +1,43 @@
-L’erreur “linear is not a registered scale” provient de Chart.js v3+ : il faut désormais inscrire explicitement chaque type de composant utilisé (scales, éléments, contrôleurs...). De même, l’erreur “glob is not a function” dans bootstrap-JS pointe vers une incompatibilité d’import ou d’utilisation du package glob.
+# 🐘 Utiliser l'image officielle PHP avec Apache
+FROM php:8.2-apache
 
-Correction Chart.js ("linear is not a registered scale")
-Pour résoudre cette erreur, il faut importer puis enregistrer manuellement la scale Linear :
+# Set the environment to production
+ENV APP_ENV=prod
+ENV APP_DEBUG=0
+ENV COMPOSER_ALLOW_SUPERUSER=1
 
-js
-import { Chart, LinearScale, CategoryScale, BarElement, LineElement, PointElement } from 'chart.js';
-// Ajoutez tous les éléments/scales utilisés dans vos graphiques
-Chart.register(LinearScale, CategoryScale, BarElement, LineElement, PointElement);
-Veillez à enregistrer chaque composant nécessaire avant d'instancier un nouveau graphique. Référez-vous à la documentation ou à l’API Chart.js pour ajuster selon les types de graphiques utilisés (LineController, BarController...).
+# 🔧 Installer les dépendances système et PHP nécessaires
+RUN apt-get update && apt-get install -y \
+    git unzip wget libicu-dev libzip-dev libpq-dev \
+    && docker-php-ext-install intl opcache pdo_pgsql zip \
+    && rm -rf /var/lib/apt/lists/*
 
-Correction Bootstrap/JS ("glob is not a function")
-Ce message indique souvent que :
+# ⚙️ Installer Symfony CLI et Composer
+RUN wget https://get.symfony.com/cli/installer -O - | bash \
+    && mv /root/.symfony*/bin/symfony /usr/local/bin/symfony \
+    && wget https://getcomposer.org/download/latest-stable/composer.phar -O /usr/local/bin/composer \
+    && chmod +x /usr/local/bin/composer
 
-Soit le package glob est importé ainsi import glob from 'glob', alors que depuis glob v9+ il faut plutôt :
+# 📁 Définir le dossier de travail
+WORKDIR /var/www/html
 
-js
-import { glob } from "glob";
-Soit vous utilisez une ancienne version du code avec une version trop récente du paquet, ou inversement.
+# 📦 Copier les fichiers du projet
+COPY . .
 
-Résumé rapide
-Pour Chart.js, enregistrez les scales et éléments explicitement :
+# 🧩 Installer les dépendances PHP/Symfony
+RUN composer install --no-dev --optimize-autoloader --no-scripts && composer dump-autoload --optimize
 
-js
-Chart.register(LinearScale);
-Pour glob, adaptez l'import selon la version, le plus sûr est d’utiliser { glob } = require('glob') ou import { glob } from "glob";.
+# ✅ Créer le dossier var/ si absent et appliquer les bons droits
+RUN mkdir -p var/cache var/log && chown -R www-data:www-data var
 
-Après ces corrections, les erreurs de connexion de contrôleur ("Error connecting controller") et d'import glob disparaîtront en général sur une stack JS/Symfony moderne.
+# 🔥 Activer le module rewrite pour Symfony
+RUN a2enmod rewrite
 
+# ⚙️ Copier la configuration Apache personnalisée
+COPY .docker/apache/000-default.conf /etc/apache2/sites-available/000-default.conf
+
+# 🌍 Exposer le port HTTP
+EXPOSE 80
+
+# 🚀 Commande de démarrage
+CMD ["apache2-foreground"]

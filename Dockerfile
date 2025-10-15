@@ -14,8 +14,14 @@ RUN apt-get update && apt-get install -y \
     zip \
     && rm -rf /var/lib/apt/lists/*
 
+# Install Symfony CLI
+RUN wget https://get.symfony.com/cli/installer -O - | bash && mv /root/.symfony5/bin/symfony /usr/local/bin/symfony
+
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Set Composer to allow superuser
+ENV COMPOSER_ALLOW_SUPERUSER=1
 
 # Set the working directory
 WORKDIR /var/www/html

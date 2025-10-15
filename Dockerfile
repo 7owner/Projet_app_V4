@@ -27,6 +27,9 @@ COPY . .
 # 🧩 Installer les dépendances PHP/Symfony
 RUN composer install --no-dev --optimize-autoloader --no-scripts && composer dump-autoload --optimize
 
+# 📦 Installer les assets de l'importmap
+RUN php bin/console importmap:install --env=prod --no-interaction
+
 # ✅ Créer le dossier var/ si absent et appliquer les bons droits
 RUN mkdir -p var/cache var/log && chown -R www-data:www-data var
 

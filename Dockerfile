@@ -2,16 +2,17 @@
 FROM php:8.2-apache
 
 # Install system dependencies
-RUN apt-get update
-RUN apt-get install -y \
+RUN apt-get update && apt-get install -y \
     libicu-dev \
     libzip-dev \
-    unzip
-RUN docker-php-ext-install \
+    libpq-dev \
+    unzip \
+    && docker-php-ext-install \
     intl \
     opcache \
     pdo_pgsql \
-    zip
+    zip \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer

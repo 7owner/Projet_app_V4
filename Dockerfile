@@ -2,11 +2,12 @@
 FROM php:8.2-apache
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update
+RUN apt-get install -y \
     libicu-dev \
     libzip-dev \
-    unzip \
-    && docker-php-ext-install \
+    unzip
+RUN docker-php-ext-install \
     intl \
     opcache \
     pdo_pgsql \

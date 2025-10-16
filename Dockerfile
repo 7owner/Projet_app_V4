@@ -25,7 +25,10 @@ WORKDIR /var/www/html
 COPY . .
 
 # 🧩 Installer les dépendances PHP/Symfony
-RUN composer install --no-dev --optimize-autoloader --no-scripts && composer dump-autoload --optimize
+RUN composer install --no-dev --optimize-autoloader
+
+# Run database migrations
+RUN php bin/console doctrine:migrations:migrate --no-interaction --env=prod --no-scripts && composer dump-autoload --optimize
 
 # 📦 Installer les assets de l'importmap
 RUN php bin/console importmap:install --env=prod --no-interaction

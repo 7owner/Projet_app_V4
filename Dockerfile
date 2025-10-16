@@ -34,7 +34,7 @@ RUN php bin/console importmap:install --env=prod --no-interaction
 RUN php bin/console asset-map:compile --env=prod
 
 # 🚀 Appliquer les migrations de base de données
-RUN php bin/console doctrine:migrations:migrate --no-interaction --env=prod
+# RUN php bin/console doctrine:migrations:migrate --no-interaction --env=prod # Removed from build
 
 # ✅ Créer le dossier var/ si absent et appliquer les bons droits
 RUN mkdir -p var/cache var/log && chown -R www-data:www-data var
@@ -49,4 +49,4 @@ COPY .docker/apache/000-default.conf /etc/apache2/sites-available/000-default.co
 EXPOSE 80
 
 # 🚀 Commande de démarrage
-CMD ["apache2-foreground"]
+CMD php bin/console doctrine:migrations:migrate --no-interaction --env=prod && apache2-foreground

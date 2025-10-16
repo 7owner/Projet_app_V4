@@ -30,6 +30,12 @@ RUN composer install --no-dev --optimize-autoloader --no-scripts && composer dum
 # 📦 Installer les assets de l'importmap
 RUN php bin/console importmap:install --env=prod --no-interaction
 
+# 📦 Compiler les assets
+RUN php bin/console asset-map:compile --env=prod
+
+# 🚀 Appliquer les migrations de base de données
+RUN php bin/console doctrine:migrations:migrate --no-interaction --env=prod
+
 # ✅ Créer le dossier var/ si absent et appliquer les bons droits
 RUN mkdir -p var/cache var/log && chown -R www-data:www-data var
 

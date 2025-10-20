@@ -42,8 +42,8 @@ if [ "${AUTO_SEED:-true}" = "true" ]; then
   user_count=$(php bin/console doctrine:query:sql "SELECT COUNT(*) FROM users" --env=prod 2>/dev/null | tr -cd '0-9' | sed -e 's/^0*//')
   if [ -z "$user_count" ]; then user_count=0; fi
   if [ "$user_count" -eq 0 ]; then
-    echo "No users found. Running initial seed (app:populate-database)..."
-    php bin/console app:populate-database --no-interaction --env=prod || true
+    echo "No users found. Running initial seed in background (app:populate-database)..."
+    nohup php bin/console app:populate-database --no-interaction --env=prod >> var/log/seed.log 2>&1 &
   else
     echo "Seed not required ($user_count users present)."
   fi

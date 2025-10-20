@@ -27,8 +27,8 @@ WORKDIR /var/www/html
 # Copy project files
 COPY . .
 
-# PHP dependencies (update to honor composer.json changes for prod)
-RUN composer update --no-dev --optimize-autoloader --no-scripts
+# PHP dependencies (use lockfile; ignore dev requirements)
+RUN composer install --no-dev --optimize-autoloader --no-scripts --no-interaction --prefer-dist
 
 # Compile env for prod so Symfony console doesn't read .env at build
 RUN composer dump-env prod

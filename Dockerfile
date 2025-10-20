@@ -28,7 +28,7 @@ WORKDIR /var/www/html
 COPY . .
 
 # PHP dependencies
-RUN composer install --no-dev --optimize-autoloader
+RUN composer install --no-dev --optimize-autoloader --no-scripts
 
 # Front assets (Symfony ImportMap / Asset Mapper)
 RUN php bin/console importmap:install --env=prod --no-interaction

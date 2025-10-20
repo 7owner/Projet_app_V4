@@ -1,6 +1,13 @@
 .git
-.idea
-.vscode
+.github
+node_modules
 vendor
-var/cache/*
-var/log/*
+var
+tests
+*.log
+dockerfile
+.env
+.env.*
+compose*.yaml
+docker-compose*.yml
+DockerDesktop*

@@ -28,15 +28,29 @@ class AutentificationAuthenticator extends AbstractLoginFormAuthenticator
 
     public function authenticate(Request $request): Passport
     {
-        $email = $request->getPayload()->getString('email');
+        // Read credentials from traditional form fields first, fallback to payload (JSON)
+        $email = $request->request->get('email');
+        if (!\is_string($email) || $email === '') {
+            $email = $request->getPayload()->getString('email');
+        }
+
+        $password = $request->request->get('password');
+        if (!\is_string($password) || $password === '') {
+            $password = $request->getPayload()->getString('password');
+        }
+
+        $csrfToken = $request->request->get('_csrf_token');
+        if (!\is_string($csrfToken) || $csrfToken === '') {
+            $csrfToken = $request->getPayload()->getString('_csrf_token');
+        }
 
         $request->getSession()->set(SecurityRequestAttributes::LAST_USERNAME, $email);
 
         return new Passport(
             new UserBadge($email),
-            new PasswordCredentials($request->getPayload()->getString('password')),
+            new PasswordCredentials($password),
             [
-                new CsrfTokenBadge('authenticate', $request->getPayload()->getString('_csrf_token')),
+                new CsrfTokenBadge('authenticate', $csrfToken),
                 new RememberMeBadge(),
             ]
         );

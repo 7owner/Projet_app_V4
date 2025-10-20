@@ -17,7 +17,15 @@ until php bin/console doctrine:query:sql "SELECT 1" --env=prod >/dev/null 2>&1; 
 done
 
 echo "Database is ready. Running migrations..."
-php bin/console doctrine:migrations:migrate --no-interaction --env=prod
+if ! php bin/console doctrine:migrations:migrate --no-interaction --env=prod; then
+  echo "Doctrine migrations failed; proceeding to fallback check."
+fi
+
+# Fallback: if core tables (e.g. users) are missing, initialize schema from metadata
+if ! php bin/console doctrine:query:sql "SELECT 1 FROM users LIMIT 1" --env=prod >/dev/null 2>&1; then
+  echo "Users table not found. Applying schema from metadata (doctrine:schema:update --force)."
+  php bin/console doctrine:schema:update --force --env=prod
+fi
 
 echo "Starting Apache..."
 exec apache2-foreground

@@ -28,7 +28,6 @@ use App\Entity\Site;
 use App\Entity\SiteAffaire;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
-use Faker\Factory;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -61,7 +60,31 @@ class PopulateDatabaseCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $faker = Factory::create('fr_FR');
+        $faker = class_exists(\Faker\Factory::class)
+            ? \Faker\Factory::create('fr_FR')
+            : new class {
+                private int $counter = 0;
+                public function email(): string { return sprintf('user%05d@example.com', ++$this->counter); }
+                public function companyEmail(): string { return sprintf('company%05d@example.com', ++$this->counter); }
+                public function streetName(): string { return 'Rue '. $this->word(); }
+                public function streetAddress(): string { return rand(1,200).' '.$this->streetName(); }
+                public function postcode(): string { return str_pad((string)rand(10000, 99999),5,'0',STR_PAD_LEFT); }
+                public function city(): string { $a=['Paris','Lyon','Marseille','Toulouse','Nice']; return $a[array_rand($a)]; }
+                public function region(): string { $a=['Île-de-France','Auvergne-Rhône-Alpes','PACA','Occitanie']; return $a[array_rand($a)]; }
+                public function country(): string { return 'France'; }
+                public function dateTimeBetween(string $start, string $end): \DateTimeImmutable { return new \DateTimeImmutable(); }
+                public function company(): string { return ucfirst($this->word()).' Corp'; }
+                public function catchPhrase(): string { return 'Qualité et service'; }
+                public function phoneNumber(): string { return '06'.str_pad((string)rand(10000000, 99999999),8,'0',STR_PAD_LEFT); }
+                public function boolean(int $p = 50): bool { return rand(1,100) <= $p; }
+                public function paragraph(): string { return 'Lorem ipsum dolor sit amet.'; }
+                public function sentence(): string { return 'Texte de démonstration.'; }
+                public function randomElement(array $a) { return $a[array_rand($a)]; }
+                public function numberBetween(int $min, int $max): int { return rand($min,$max); }
+                public function word(): string { $w=['alpha','beta','gamma','delta','omega']; return $w[array_rand($w)]; }
+                public function __get(string $name) { if ($name==='word') { return $this->word(); } return null; }
+                public function unique() { return $this; }
+            };
 
         $io->title('Populating database with fake data...');
 
@@ -116,7 +139,7 @@ class PopulateDatabaseCommand extends Command
         $users = [];
         for ($i = 0; $i < 15; $i++) {
             $user = new User();
-            $user->setEmail($faker->unique()->email);
+            $user->setEmail(method_exists($faker,'unique') ? $faker->unique()->email : $faker->email());
             $user->setPassword($this->passwordHasher->hashPassword($user, 'password'));
             $user->setRoles(['ROLE_USER']);
             $this->entityManager->persist($user);

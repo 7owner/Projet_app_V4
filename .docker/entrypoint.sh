@@ -34,18 +34,6 @@ if ! php bin/console doctrine:migrations:migrate --no-interaction --env=prod; th
   fi
 fi
 
-# Optionally load fixtures once on empty DB
-if [ "${LOAD_FIXTURES:-false}" = "true" ]; then
-  echo "LOAD_FIXTURES enabled. Checking if initial data should be loaded..."
-  user_count=$(php bin/console doctrine:query:sql "SELECT COUNT(*) FROM users" --env=prod 2>/dev/null | tr -cd '0-9' | sed -e 's/^0*//')
-  if [ -z "$user_count" ]; then user_count=0; fi
-  if [ "$user_count" -eq 0 ]; then
-    echo "Users table is empty. Loading fixtures (append)..."
-    php bin/console doctrine:fixtures:load --no-interaction --append --env=prod || true
-  else
-    echo "Users already present ($user_count). Skipping fixtures."
-  fi
-fi
 
 echo "Starting Apache..."
 exec apache2-foreground

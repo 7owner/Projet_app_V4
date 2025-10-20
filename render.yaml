@@ -11,8 +11,6 @@ services:
     envVars:
       - key: APP_ENV
         value: prod
-      - key: LOAD_FIXTURES
-        value: "true"
       - key: APP_SECRET
         generateValue: true
       - key: DATABASE_URL

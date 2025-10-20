@@ -27,11 +27,11 @@ WORKDIR /var/www/html
 # Copy project files
 COPY . .
 
-# Precompile environment for Symfony so console doesn't read .env at build
-RUN composer dump-env prod
-
 # PHP dependencies
 RUN composer install --no-dev --optimize-autoloader --no-scripts
+
+# Compile env for prod so Symfony console doesn't read .env at build
+RUN composer dump-env prod
 
 # Front assets (Symfony ImportMap / Asset Mapper)
 RUN php bin/console importmap:install --env=prod --no-interaction

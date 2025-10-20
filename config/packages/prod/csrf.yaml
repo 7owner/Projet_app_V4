@@ -1,0 +1,6 @@
+framework:
+    csrf_protection:
+        # Disable strict Origin/Referer header check in production behind proxies
+        # CSRF tokens remain validated; only the header-origin check is disabled
+        check_header: false
+

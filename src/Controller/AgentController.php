@@ -11,11 +11,9 @@ use DateTimeImmutable; // Added this line
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 
 #[Route('/agent')]
-#[IsGranted('ROLE_USER')] // Restrict access to authenticated users
 final class AgentController extends AbstractController
 {
     #[Route('/', name: 'app_agent_index', methods: ['GET'])]

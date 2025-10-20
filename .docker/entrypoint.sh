@@ -21,12 +21,14 @@ php bin/console doctrine:migrations:sync-metadata-storage --no-interaction --env
 if ! php bin/console doctrine:migrations:migrate --no-interaction --env=prod; then
   echo "Migrations failed. Considering automatic baseline..."
   if [ "${AUTO_BASELINE:-true}" = "true" ]; then
-    # If core table exists, baseline the latest migration and retry
-    if php bin/console doctrine:query:sql "SELECT 1 FROM users LIMIT 1" --env=prod >/dev/null 2>&1; then
+    # If any user table exists in public schema, baseline the latest migration and retry
+    table_count=$(php bin/console doctrine:query:sql "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'" --env=prod 2>/dev/null | tr -cd '0-9')
+    if [ -z "$table_count" ]; then table_count=0; fi
+    if [ "$table_count" -gt 0 ]; then
       latest_file=$(ls -1 migrations/Version*.php 2>/dev/null | sort | tail -n1)
       if [ -n "$latest_file" ]; then
         latest_class="DoctrineMigrations\\$(basename "$latest_file" .php)"
-        echo "Baselining migration ${latest_class}..."
+        echo "Detected existing tables ($table_count). Baselining ${latest_class}..."
         php bin/console doctrine:migrations:version --add --no-interaction "$latest_class" || true
         php bin/console doctrine:migrations:migrate --no-interaction --env=prod || true
       fi

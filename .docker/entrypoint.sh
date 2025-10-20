@@ -18,7 +18,21 @@ done
 
 echo "Database is ready. Syncing migration storage and running migrations..."
 php bin/console doctrine:migrations:sync-metadata-storage --no-interaction --env=prod || true
-php bin/console doctrine:migrations:migrate --no-interaction --env=prod
+if ! php bin/console doctrine:migrations:migrate --no-interaction --env=prod; then
+  echo "Migrations failed. Considering automatic baseline..."
+  if [ "${AUTO_BASELINE:-true}" = "true" ]; then
+    # If core table exists, baseline the latest migration and retry
+    if php bin/console doctrine:query:sql "SELECT 1 FROM users LIMIT 1" --env=prod >/dev/null 2>&1; then
+      latest_file=$(ls -1 migrations/Version*.php 2>/dev/null | sort | tail -n1)
+      if [ -n "$latest_file" ]; then
+        latest_class="DoctrineMigrations\\$(basename "$latest_file" .php)"
+        echo "Baselining migration ${latest_class}..."
+        php bin/console doctrine:migrations:version --add --no-interaction "$latest_class" || true
+        php bin/console doctrine:migrations:migrate --no-interaction --env=prod || true
+      fi
+    fi
+  fi
+fi
 
 echo "Starting Apache..."
 exec apache2-foreground

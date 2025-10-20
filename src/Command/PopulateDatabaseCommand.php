@@ -709,9 +709,6 @@ class PopulateDatabaseCommand extends Command
     {
         $connection = $this->entityManager->getConnection();
         $platform = $connection->getDatabasePlatform();
-        if ($platform->supportsForeignKeyConstraints()) {
-            $connection->executeStatement('SET FOREIGN_KEY_CHECKS = 0');
-        }
 
         $entities = [
             Adresse::class, Agence::class, User::class, Agent::class, Passeport::class, Equipe::class,
@@ -721,15 +718,26 @@ class PopulateDatabaseCommand extends Command
             RendezvousImage::class, RenduIntervention::class, RenduInterventionImage::class, DocumentsRepertoire::class,
         ];
 
+        $tables = [];
         foreach ($entities as $entityClass) {
-            $cmd = $this->entityManager->getClassMetadata($entityClass);
-            $connection->executeStatement('TRUNCATE TABLE `' . $cmd->getTableName() . '`');
-            $io->note(sprintf('Truncated table: %s', $cmd->getTableName()));
+            $tables[] = $this->entityManager->getClassMetadata($entityClass)->getTableName();
         }
 
-        if ($platform->supportsForeignKeyConstraints()) {
+        if ($platform->getName() === 'mysql') {
+            $connection->executeStatement('SET FOREIGN_KEY_CHECKS = 0');
+            foreach ($tables as $table) {
+                $connection->executeStatement('TRUNCATE TABLE `'.$table.'`');
+                $io->note(sprintf('Truncated table: %s', $table));
+            }
             $connection->executeStatement('SET FOREIGN_KEY_CHECKS = 1');
+        } else {
+            // PostgreSQL and others: use CASCADE and restart identities
+            $connection->executeStatement('TRUNCATE TABLE '.implode(', ', $tables).' RESTART IDENTITY CASCADE');
+            foreach ($tables as $table) {
+                $io->note(sprintf('Truncated table: %s', $table));
+            }
         }
+
         $io->success('All tables truncated.');
     }
 }

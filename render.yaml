@@ -19,6 +19,3 @@ services:
       - key: TRUSTED_HOSTS
         value: "^.+.onrender.com$"
 
-  - type: psql
-    name: symfony-db
-    plan: free

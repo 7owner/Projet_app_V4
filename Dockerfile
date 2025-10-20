@@ -1,55 +1,53 @@
-# 🐘 Utiliser l'image officielle PHP avec Apache
 FROM php:8.2-apache
 
-# Set the environment to production
+# Production environment
 ENV APP_ENV=prod
 ENV APP_DEBUG=0
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
-# 🔧 Installer les dépendances système et PHP nécessaires
+# Cache-busting for Render builds: tie layers to the git commit
+ARG RENDER_GIT_COMMIT
+LABEL org.opencontainers.image.revision=$RENDER_GIT_COMMIT
+
+# Install system and PHP extensions
 RUN apt-get update && apt-get install -y \
     git unzip wget libicu-dev libzip-dev libpq-dev \
     && docker-php-ext-install intl opcache pdo_pgsql zip \
     && rm -rf /var/lib/apt/lists/*
 
-# ⚙️ Installer Symfony CLI et Composer
+# Install Symfony CLI and Composer
 RUN wget https://get.symfony.com/cli/installer -O - | bash \
     && mv /root/.symfony*/bin/symfony /usr/local/bin/symfony \
     && wget https://getcomposer.org/download/latest-stable/composer.phar -O /usr/local/bin/composer \
     && chmod +x /usr/local/bin/composer
 
-# 📁 Définir le dossier de travail
+# Workdir
 WORKDIR /var/www/html
 
-# 📦 Copier les fichiers du projet
+# Copy project files
 COPY . .
 
-# 🧩 Installer les dépendances PHP/Symfony
+# PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
-# Run database migrations
-RUN php bin/console doctrine:migrations:migrate --no-interaction --env=prod --no-scripts && composer dump-autoload --optimize
-
-# 📦 Installer les assets de l'importmap
+# Front assets (Symfony ImportMap / Asset Mapper)
 RUN php bin/console importmap:install --env=prod --no-interaction
-
-# 📦 Compiler les assets
 RUN php bin/console asset-map:compile --env=prod
 
-# 🚀 Appliquer les migrations de base de données
-# RUN php bin/console doctrine:migrations:migrate --no-interaction --env=prod # Removed from build
-
-# ✅ Créer le dossier var/ si absent et appliquer les bons droits
+# Prepare writable dirs
 RUN mkdir -p var/cache var/log && chown -R www-data:www-data var
 
-# 🔥 Activer le module rewrite pour Symfony
+# Apache rewrite
 RUN a2enmod rewrite
 
-# ⚙️ Copier la configuration Apache personnalisée
+# Apache vhost
 COPY .docker/apache/000-default.conf /etc/apache2/sites-available/000-default.conf
 
-# 🌍 Exposer le port HTTP
+# Entry point
+RUN chmod +x .docker/entrypoint.sh
+
 EXPOSE 80
 
-# 🚀 Commande de démarrage
-CMD php bin/console doctrine:migrations:migrate --no-interaction --env=prod && apache2-foreground
+# Start command: wait DB, migrate, start Apache
+CMD [".docker/entrypoint.sh"]
+
